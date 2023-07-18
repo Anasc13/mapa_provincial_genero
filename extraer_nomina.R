@@ -1,3 +1,4 @@
+library(tidyverse)
 library(pdftools)
 library (stringr)
 library(tabulizer)
@@ -7,47 +8,38 @@ library(rlist)
 library(rvest)
 
 web <- "https://www.salta.gob.ar/public/descargas/nomina/Nomina-Provincial-de-Autoridades-Gobierno-Salta.pdf"
-nomina <-  pdf_text(web) %>% split_pdf("\n")
+nomina <-  pdf_text(web) %>% str_split("\n")
 
 #elimino paginas
+head(nomina[[]], 66)
 nomina[[1]] <- NULL
 nomina <- nomina[-c(1:5)]
 nomina <- nomina[-c(48:100)]
 
-data <- write.csv2(nomina, "data.csv")
+tabla <- data.frame(matrix(unlist(nomina)))
+write.csv2(tabla, "data.csv")
 
 ###intento de funcion
-ministro <- function(archivo) {  
-  resultado_1 <- rlist::list.search(archivo,grepl('MINISTERIO', .),'character')
-  return(resultado_1)
-}
-ministro(nomina)
+nombres <- read.csv2(file = "nombres.csv", sep = ";", header = T)
+nombres$Nombres <- str_to_upper(nombres$Nombres)
+head(nombres)
 
-length(tabla) # longitud de la lista
-longitud <- lengths(tabla) # longitud de cada elemento de la lista
+#ministros
+ministros <- read.csv2(file = "data.csv", sep = ";", header = T)
+cargos <- left_join (ministros, nombres, by="Nombres")
 
-for (j in 1:longitud){
-  ministerio <- str_extract_all(tabla, "MINISTERIO DE", tabla[[j]])
-}
+#gobernacion vice
+write.csv2(tabla, "data.csv")
 
+regmatches(tabla, gregexpr(pattern, tabla))
 
-tabla <- data.frame(matrix(unlist(nomina)))
-ministerio <- str_extract(tabla, "MINISTERIO DE ")
-
-data <- write.csv2(tabla, "data.csv")
-
-#resultado_2 <- rlist::list.select(archivo, 'Ministro')
-#lista <- list(p1= list(nombre=resultado_1), 
-#              p2=list(nombre=resultado_2))
-
-
-head(nomina[[]], 66)
+str_extract(tabla,"^Gobernador[\\nSAENZ$]")
 
 gobernacion <-  nomina[[1]][c(9,10)]
 vicegobernacion <-  nomina[[10]][c(7,8)]
 
-ministerios <-  str_subset(tabla, "^\\MINISTERIO DE")
-varones <- str_subset(aux, "^\\Secretario\\:")
-mujeres <-  str_subset(aux, "^\\Secretaria\\:")
+pattern <- c("SECRETARÍA")
+
+grep(pattern, tabla)
 
 
